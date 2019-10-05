@@ -3,15 +3,11 @@
     using System;
     using System.Globalization;
     using System.IO;
+    using System.Reflection;
     using System.Text;
 
     internal class Program
     {
-        /*
-         * "C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.6.1\System.dll";
-         * "DotNetFrameworkExampleDll.dll"
-         *
-         */
         private static string dllFileName = null;
         private static bool interactive = false;
         private static string outputFilename = null;
@@ -22,6 +18,11 @@
 
             if (interactive)
             {
+                if (outputFilename != null)
+                {
+                    Console.WriteLine("Extraction done! Press any key to exit program.");
+                }
+
                 Console.ReadKey();
             }
         }
@@ -52,6 +53,12 @@
 
         private static bool TryProcessStartupArguments(string[] args, TextWriter output)
         {
+            if (args.Length == 0)
+            {
+                PrintHelp(output);
+                return false;
+            }
+
             int skipArguments = 0;
 
             for (int i = 0; i < args.Length; i++)
@@ -80,6 +87,18 @@
             }
 
             return true;
+        }
+
+        private static void PrintHelp(TextWriter output)
+        {
+            output.WriteLine($".NET Framework Dll Exporter {Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
+            output.WriteLine("Utility for extracting API from .NET Framework DLL");
+            output.WriteLine(" ------------------------------------------------ ");
+            output.WriteLine($"Usage: {Path.GetFileName(Assembly.GetEntryAssembly().Location)} <path-to-extracting-dll-file> [-i] [-o <path-to-output-file>]");
+            output.WriteLine("-i - interactive mode");
+            output.WriteLine("-o <output-file-path> - specify output file");
+            output.WriteLine();
+            Console.ReadKey();
         }
 
         private static void ProcessPositionalParameters(string arg)
