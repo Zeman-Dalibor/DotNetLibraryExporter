@@ -10,7 +10,7 @@ Repository contains Microsoft Visual Studio Solution File (.sln). It contains 3 
  - https://www.monodevelop.com/
  - https://www.jetbrains.com/rider/
 
-When you open it in you prefered IDE, you can Build whole solution or individual projects through standard way.
+When you open it in your prefered IDE, you can build whole solution or individual projects through standard way.
 
 ## Usage
 Once you have utility in binary form, you can run it from command line: 
@@ -31,7 +31,7 @@ Parameter | Name | Parameters | Desription
 ## Output Structure
 Output is always xml file. By default its encoding is UTF-8. It can be different if the set output is not supporting this type of encoding, for example standard output.
 
-Every outputing file has at the beginning xml version information. After that there is element `Assembly` which contains whole extracted API from one dll (Assembly). Whole file is hierarchical by namespaces and (non-nested) types.
+Every output file has at the beginning xml version information. After that there is element `Assembly` which contains whole extracted API from one dll (Assembly). Whole file is hierarchical by namespaces and (non-nested) types.
 
 ### Overview of elements:
 Element   | attributes | C#/.NET origin | Meaning
