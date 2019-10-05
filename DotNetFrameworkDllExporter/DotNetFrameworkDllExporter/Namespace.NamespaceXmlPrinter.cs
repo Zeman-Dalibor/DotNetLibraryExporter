@@ -28,8 +28,22 @@
                 {
                     writer.WriteStartElement("Enum");
                 }
+                else
+                {
+                    throw new NotSupportedException();
+                }
 
-                writer.WriteAttributeString("name", type.Name);
+                writer.WriteAttributeString("name", type.Name.Split(new[] { '`' }, 2)[0]);
+
+                // Generic parameters
+                foreach (Type genericParam in type.GetGenericArguments())
+                {
+                    writer.WriteStartElement("ClassGenericParameter");
+                    writer.WriteAttributeString("name", genericParam.Name);
+                    writer.WriteEndElement();
+                }
+
+                // TODO: Inherit
 
                 // Fields
                 foreach (FieldInfo fieldInfo in type.GetFields())
@@ -47,6 +61,8 @@
                     writer.WriteStartElement("Property");
                     writer.WriteAttributeString("name", propertyInfo.Name);
                     writer.WriteAttributeString("type", GetCSharpFullName(propertyInfo.PropertyType));
+                    writer.WriteAttributeString("get", (propertyInfo.GetMethod != null).ToString());
+                    writer.WriteAttributeString("set", (propertyInfo.SetMethod != null).ToString());
                     writer.WriteEndElement();
                 }
 
@@ -74,23 +90,18 @@
                         writer.WriteStartElement("Parameter");
                         writer.WriteAttributeString("name", parameter.Name);
                         writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
+                        writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
+                        writer.WriteAttributeString("out", parameter.IsOut.ToString());
                         writer.WriteEndElement();
                     }
 
                     writer.WriteEndElement();
                 }
 
-                Type[] nestedTypes = type.GetNestedTypes();
-                if (nestedTypes.Length != 0)
+                // Nested types
+                foreach (Type nestedType in type.GetNestedTypes())
                 {
-                    writer.WriteStartElement("NestedTypes");
-
-                    foreach (Type nestedType in nestedTypes)
-                    {
-                        PrintType(writer, nestedType);
-                    }
-
-                    writer.WriteEndElement();
+                    PrintType(writer, nestedType);
                 }
 
                 writer.WriteEndElement();
@@ -98,15 +109,81 @@
 
             private static string GetCSharpFullName(Type type)
             {
-                if (!type.IsConstructedGenericType)
+                if (type.IsByRef)
+                {
+                    return GetCSharpFullName(type.GetElementType());
+                }
+                else if (type.IsPointer)
+                {
+                    return $"{GetCSharpFullName(type.GetElementType())}*";
+                }
+                else if (type.IsArray)
+                {
+                    return $"{GetCSharpFullName(type.GetElementType())}[]";
+                }
+                else if (type.IsConstructedGenericType || type.IsGenericType)
+                {
+                    return GetGenericTypeFormat(type);
+                }
+                else if (type.IsGenericParameter)
+                {
+                    return type.Name;
+                }
+                else if (type.IsNested)
+                {
+                    return $"{GetCSharpFullName(type.DeclaringType)}.{type.Name}";
+                }
+                else
                 {
                     return type.FullName;
                 }
+            }
 
+            private static string GetGenericTypeFormat(Type type)
+            {
                 Type[] genericTypes = type.GetGenericArguments();
-                string genericTypesString = string.Join(", ", genericTypes.Select(t => GetCSharpFullName(t)));
+                return GetReformatGeneric(type, genericTypes, genericTypes.Length);
+            }
 
-                return type.Namespace + "." + type.Name.Substring(0, type.Name.IndexOf("`")) + "[" + genericTypesString + "]";
+            private static string GetReformatGeneric(Type type, Type[] genericTypes, int length)
+            {
+                ParseNameAndGenericParameterCount(type, out string name, out int genericParamsCount);
+
+                var genericParams = genericTypes.Take(length).Skip(length - genericParamsCount).ToList();
+                string genericTypesString = string.Join(", ", genericParams.Select(t => GetCSharpFullName(t)));
+
+                if (type.IsNested)
+                {
+                    string genericAppendix = string.IsNullOrWhiteSpace(genericTypesString) ? string.Empty : "{" + genericTypesString + "}";
+
+                    return GetReformatGeneric(type.DeclaringType, genericTypes, length - genericParamsCount) + "." + name + genericAppendix;
+                }
+                else
+                {
+                    if (genericParamsCount != length)
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    string genericAppendix = string.IsNullOrWhiteSpace(genericTypesString) ? string.Empty : "{" + genericTypesString + "}";
+
+                    return type.Namespace + "." + name + genericAppendix;
+                }
+            }
+
+            private static void ParseNameAndGenericParameterCount(Type type, out string name, out int numberOfGenericParams)
+            {
+                if (!type.Name.Contains('`'))
+                {
+                    name = type.Name;
+                    numberOfGenericParams = 0;
+                }
+                else
+                {
+                    string[] tokens = type.Name.Split('`');
+                    name = tokens[0];
+                    numberOfGenericParams = int.Parse(tokens[1]);
+                }
             }
         }
     }

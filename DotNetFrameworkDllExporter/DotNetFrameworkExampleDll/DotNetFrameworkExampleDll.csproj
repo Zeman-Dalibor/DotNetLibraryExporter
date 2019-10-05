@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DotNetFrameworkExampleDll</RootNamespace>
     <AssemblyName>DotNetFrameworkExampleDll</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -45,6 +46,7 @@
     <Compile Include="ExampleClass1.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IExampleInterface1.cs" />
+    <Compile Include="InnerGenericTypes.cs" />
     <Compile Include="InnerNamespace\SecondInnerNamespace\SecondInnerClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

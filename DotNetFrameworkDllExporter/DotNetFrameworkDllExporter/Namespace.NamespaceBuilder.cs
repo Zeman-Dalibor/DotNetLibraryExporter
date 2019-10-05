@@ -24,6 +24,13 @@
                 {
                     return;
                 }
+                
+                if (type.Namespace == null)
+                {
+                    Console.WriteLine($"WARN: type {type} has no namespace.");
+                    global.Types.Add(type);
+                    return;
+                }
 
                 Namespace handle = global;
                 string[] tokens = type.Namespace.Split('.');
