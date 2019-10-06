@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExampleClass1.cs" />
+    <Compile Include="ExampleDelegate.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="IExampleInterface1.cs" />
     <Compile Include="InnerGenericTypes.cs" />
