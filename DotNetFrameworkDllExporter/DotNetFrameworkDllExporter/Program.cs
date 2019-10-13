@@ -8,6 +8,7 @@
 
     internal class Program
     {
+        public static bool WriteEntityId = true;
         private static string dllFileName = null;
         private static bool interactive = false;
         private static string outputFilename = null;
@@ -97,6 +98,7 @@
             output.WriteLine($"Usage: {Path.GetFileName(Assembly.GetEntryAssembly().Location)} <path-to-extracting-dll-file> [-i] [-o <path-to-output-file>]");
             output.WriteLine("-i - interactive mode");
             output.WriteLine("-o <output-file-path> - specify output file");
+            output.WriteLine("-e - disable entity ID");
             output.WriteLine();
             Console.ReadKey();
         }
@@ -121,6 +123,10 @@
                 case "-o":
                     outputFilename = args[i + 1];
                     skipArguments = 1;
+                    break;
+
+                case "-e":
+                    WriteEntityId = false;
                     break;
             }
 

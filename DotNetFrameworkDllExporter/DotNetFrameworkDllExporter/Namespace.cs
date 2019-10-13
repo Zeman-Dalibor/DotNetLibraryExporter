@@ -28,6 +28,7 @@
             while (handle.ParentNamespace != null)
             {
                 names.Add(handle.Name);
+                handle = handle.ParentNamespace;
             }
 
             names.Reverse();
@@ -43,6 +44,7 @@
         internal void PrintXml(XmlWriter writer)
         {
             writer.WriteStartElement("Namespace");
+            writer.WriteAttributeString("entityId", this.GetFullNamespace());
             writer.WriteAttributeString("name", this.Name);
 
             foreach (Type type in this.Types)

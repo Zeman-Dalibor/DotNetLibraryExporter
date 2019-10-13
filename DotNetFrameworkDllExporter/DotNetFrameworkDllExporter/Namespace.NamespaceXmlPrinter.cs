@@ -21,77 +21,90 @@
                     }
                     else
                     {
-                        writer.WriteStartElement("Class");
+                        PrintClass(writer, type);
+                        return;
                     }
                 }
                 else if (type.IsInterface)
                 {
-                    writer.WriteStartElement("Interface");
+                    PrintInterface(writer, type);
+                    return;
                 }
                 else if (type.IsValueType)
                 {
-                    if (type.IsEnum) // Enum is also ValueType It must be checked first
+                    // Enum is also ValueType It must be checked first
+                    if (type.IsEnum)
                     {
                         PrintEnum(writer, type);
                         return;
                     }
                     else
                     {
-                        writer.WriteStartElement("Struct");
+                        PrintStruct(writer, type);
+                        return;
                     }
                 }
                 else
                 {
                     throw new NotSupportedException();
                 }
+            }
 
-                writer.WriteAttributeString("name", SimplifiedName(type));
-
-                // Generic parameters
-                foreach (Type genericParam in type.GetGenericArguments())
+            private static void PrintEntityIdOfType(XmlWriter writer, Type type)
+            {
+                if (Program.WriteEntityId)
                 {
-                    writer.WriteStartElement("GenericParameter");
-                    writer.WriteAttributeString("name", genericParam.Name);
-                    writer.WriteEndElement();
+                    writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}");
                 }
+            }
 
+            private static void PrintInheritanceOfType(XmlWriter writer, Type type)
+            {
                 // Inheritance
                 if (type.BaseType != null)
                 {
-                    writer.WriteStartElement("BaseClass");
-                    writer.WriteAttributeString("name", GetCSharpFullName(type.BaseType));
-                    writer.WriteEndElement();
+                    writer.WriteAttributeString("BaseClass", GetCSharpFullName(type.BaseType));
                 }
 
                 // Interface implement
-                foreach (var interfaceType in type.GetInterfaces())
+                if (type.GetInterfaces().Length > 0)
                 {
-                    writer.WriteStartElement("InterfaceImplemented");
-                    writer.WriteAttributeString("name", GetCSharpFullName(interfaceType));
+                    writer.WriteAttributeString("InterfaceImplemented", string.Join(";", type.GetInterfaces().Select(interfaceType => GetCSharpFullName(interfaceType))));
+                }
+            }
+
+            private static void PrintConstructorsOfType(XmlWriter writer, Type type)
+            {
+                foreach (var constructorInfo in type.GetConstructors())
+                {
+                    writer.WriteStartElement("Constructor");
+                    string methodParamsString = string.Join(",", constructorInfo.GetParameters().Select(mt => GetCSharpFullName(mt.ParameterType)));
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{constructorInfo.Name}({methodParamsString})");
+                    }
+
+                    foreach (ParameterInfo parameter in constructorInfo.GetParameters())
+                    {
+                        writer.WriteStartElement("Parameter");
+                        if (Program.WriteEntityId)
+                        {
+                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{constructorInfo.Name}({methodParamsString}).{parameter.Name}");
+                        }
+
+                        writer.WriteAttributeString("name", parameter.Name);
+                        writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
+                        writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
+                        writer.WriteAttributeString("out", parameter.IsOut.ToString());
+                        writer.WriteEndElement();
+                    }
+
                     writer.WriteEndElement();
                 }
+            }
 
-                // Fields
-                foreach (FieldInfo fieldInfo in type.GetFields())
-                {
-                    writer.WriteStartElement("Field");
-                    writer.WriteAttributeString("name", fieldInfo.Name);
-                    writer.WriteAttributeString("static", fieldInfo.IsStatic.ToString());
-                    writer.WriteAttributeString("type", GetCSharpFullName(fieldInfo.FieldType));
-                    writer.WriteEndElement();
-                }
-
-                // Properties
-                foreach (PropertyInfo propertyInfo in type.GetProperties())
-                {
-                    writer.WriteStartElement("Property");
-                    writer.WriteAttributeString("name", propertyInfo.Name);
-                    writer.WriteAttributeString("type", GetCSharpFullName(propertyInfo.PropertyType));
-                    writer.WriteAttributeString("get", (propertyInfo.GetMethod != null).ToString());
-                    writer.WriteAttributeString("set", (propertyInfo.SetMethod != null).ToString());
-                    writer.WriteEndElement();
-                }
-
+            private static void PrintMethodsOfType(XmlWriter writer, Type type)
+            {
                 IEnumerable<string> propertiesNames = type.GetProperties().Select(property => property.Name);
 
                 // Methods
@@ -108,14 +121,26 @@
                     }
 
                     writer.WriteStartElement("Method");
+                    string genericParamsString = string.Join(",", methodInfo.GetGenericArguments().Select(mt => GetCSharpFullName(mt)));
+                    string methodParamsString = string.Join(",", methodInfo.GetParameters().Select(mt => GetCSharpFullName(mt.ParameterType)));
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString})");
+                    }
+
                     writer.WriteAttributeString("name", methodInfo.Name);
                     writer.WriteAttributeString("static", methodInfo.IsStatic.ToString());
                     writer.WriteAttributeString("return", GetCSharpFullName(methodInfo.ReturnType));
-                    
+
                     // Generic parameters
                     foreach (Type genericParam in methodInfo.GetGenericArguments())
                     {
                         writer.WriteStartElement("GenericParameter");
+                        if (Program.WriteEntityId)
+                        {
+                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString}).#{genericParam.Name}");
+                        }
+
                         writer.WriteAttributeString("name", genericParam.Name);
                         writer.WriteEndElement();
                     }
@@ -123,6 +148,11 @@
                     foreach (ParameterInfo parameter in methodInfo.GetParameters())
                     {
                         writer.WriteStartElement("Parameter");
+                        if (Program.WriteEntityId)
+                        {
+                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString}).{parameter.Name}");
+                        }
+
                         writer.WriteAttributeString("name", parameter.Name);
                         writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
                         writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
@@ -132,23 +162,112 @@
 
                     writer.WriteEndElement();
                 }
+            }
 
-                foreach (var constructorInfo in type.GetConstructors())
+            private static void PrintPropertiesOfType(XmlWriter writer, Type type)
+            {
+                // Properties
+                foreach (PropertyInfo propertyInfo in type.GetProperties())
                 {
-                    writer.WriteStartElement("Constructor");
-
-                    foreach (ParameterInfo parameter in constructorInfo.GetParameters())
+                    writer.WriteStartElement("Property");
+                    if (Program.WriteEntityId)
                     {
-                        writer.WriteStartElement("Parameter");
-                        writer.WriteAttributeString("name", parameter.Name);
-                        writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
-                        writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
-                        writer.WriteAttributeString("out", parameter.IsOut.ToString());
-                        writer.WriteEndElement();
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{propertyInfo.Name}");
                     }
 
+                    writer.WriteAttributeString("name", propertyInfo.Name);
+                    writer.WriteAttributeString("type", GetCSharpFullName(propertyInfo.PropertyType));
+                    writer.WriteAttributeString("get", (propertyInfo.GetMethod != null).ToString());
+                    writer.WriteAttributeString("set", (propertyInfo.SetMethod != null).ToString());
                     writer.WriteEndElement();
                 }
+            }
+
+            private static void PrintFieldsOfType(XmlWriter writer, Type type)
+            {
+                // Fields
+                foreach (FieldInfo fieldInfo in type.GetFields())
+                {
+                    writer.WriteStartElement("Field");
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{fieldInfo.Name}");
+                    }
+
+                    writer.WriteAttributeString("name", fieldInfo.Name);
+                    writer.WriteAttributeString("static", fieldInfo.IsStatic.ToString());
+                    writer.WriteAttributeString("type", GetCSharpFullName(fieldInfo.FieldType));
+                    writer.WriteEndElement();
+                }
+            }
+
+            private static void PrintGenericParametersOfType(XmlWriter writer, Type type)
+            {
+                // Generic parameters
+                foreach (Type genericParam in type.GetGenericArguments())
+                {
+                    writer.WriteStartElement("GenericParameter");
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{genericParam.Name}");
+                    }
+
+                    writer.WriteAttributeString("name", genericParam.Name);
+                    writer.WriteEndElement();
+                }
+            }
+
+            private static void PrintInterface(XmlWriter writer, Type type)
+            {
+                writer.WriteStartElement("Interface");
+                PrintEntityIdOfType(writer, type);
+
+                writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
+
+                PrintInheritanceOfType(writer, type);
+                PrintGenericParametersOfType(writer, type);
+                PrintPropertiesOfType(writer, type);
+                PrintMethodsOfType(writer, type);
+                writer.WriteEndElement();
+            }
+
+            private static void PrintStruct(XmlWriter writer, Type type)
+            {
+                writer.WriteStartElement("Struct");
+                PrintEntityIdOfType(writer, type);
+
+                writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
+
+                PrintInheritanceOfType(writer, type);
+                PrintGenericParametersOfType(writer, type);
+                PrintFieldsOfType(writer, type);
+                PrintPropertiesOfType(writer, type);
+                PrintMethodsOfType(writer, type);
+                PrintConstructorsOfType(writer, type);
+
+                // Nested types
+                foreach (Type nestedType in type.GetNestedTypes())
+                {
+                    PrintType(writer, nestedType);
+                }
+
+                writer.WriteEndElement();
+            }
+
+            private static void PrintClass(XmlWriter writer, Type type)
+            {
+                writer.WriteStartElement("Class");
+
+                PrintEntityIdOfType(writer, type);
+
+                writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
+
+                PrintInheritanceOfType(writer, type);
+                PrintGenericParametersOfType(writer, type);
+                PrintFieldsOfType(writer, type);
+                PrintPropertiesOfType(writer, type);
+                PrintMethodsOfType(writer, type);
+                PrintConstructorsOfType(writer, type);
 
                 // Nested types
                 foreach (Type nestedType in type.GetNestedTypes())
@@ -162,19 +281,30 @@
             private static void PrintEnum(XmlWriter writer, Type type)
             {
                 writer.WriteStartElement("Enum");
+                
+                PrintEntityIdOfType(writer, type);
+
                 foreach (var enumName in type.GetEnumNames())
                 {
                     writer.WriteStartElement("EnumName");
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{enumName}");
+                    }
+
                     writer.WriteAttributeString("name", enumName);
                     writer.WriteEndElement();
                 }
+
                 writer.WriteEndElement();
             }
 
             private static void PrintDelegate(XmlWriter writer, Type type)
             {
                 writer.WriteStartElement("Delegate");
-                writer.WriteAttributeString("name", SimplifiedName(type));
+                
+                PrintEntityIdOfType(writer, type);
+                writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
                 var methodInfo = type.GetMethod("Invoke");
                 writer.WriteAttributeString("return", GetCSharpFullName(methodInfo.ReturnType));
@@ -183,6 +313,11 @@
                 foreach (Type genericParam in type.GetGenericArguments())
                 {
                     writer.WriteStartElement("GenericParameter");
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.#{genericParam.Name}");
+                    }
+
                     writer.WriteAttributeString("name", genericParam.Name);
                     writer.WriteEndElement();
                 }
@@ -190,6 +325,11 @@
                 foreach (ParameterInfo parameter in methodInfo.GetParameters())
                 {
                     writer.WriteStartElement("Parameter");
+                    if (Program.WriteEntityId)
+                    {
+                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{parameter.Name}");
+                    }
+
                     writer.WriteAttributeString("name", parameter.Name);
                     writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
                     writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
@@ -200,7 +340,7 @@
                 writer.WriteEndElement();
             }
 
-            private static string SimplifiedName(Type type)
+            private static string GetNameWithoutGenericMark(Type type)
             {
                 return type.Name.Split(new[] { '`' }, 2)[0];
             }
@@ -225,7 +365,7 @@
                 }
                 else if (type.IsGenericParameter)
                 {
-                    return type.Name;
+                    return $"#{type.Name}";
                 }
                 else if (type.IsNested)
                 {
