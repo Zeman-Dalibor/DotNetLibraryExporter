@@ -5,29 +5,30 @@
     using System.Linq;
     using System.Reflection;
     using System.Xml;
+    using DotNetFrameworkDllExporter.XmlPrinter;
 
     public partial class Namespace
     {
         private class NamespaceXmlPrinter
         {
-            public static void PrintType(XmlWriter writer, Type type)
+            public static void PrintType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 if (type.IsClass)
                 {
                     if (type.IsSubclassOf(typeof(MulticastDelegate)))
                     {
-                        PrintDelegate(writer, type);
+                        PrintDelegate(writer, type, idPrinter);
                         return;
                     }
                     else
                     {
-                        PrintClass(writer, type);
+                        PrintClass(writer, type, idPrinter);
                         return;
                     }
                 }
                 else if (type.IsInterface)
                 {
-                    PrintInterface(writer, type);
+                    PrintInterface(writer, type, idPrinter);
                     return;
                 }
                 else if (type.IsValueType)
@@ -35,12 +36,12 @@
                     // Enum is also ValueType It must be checked first
                     if (type.IsEnum)
                     {
-                        PrintEnum(writer, type);
+                        PrintEnum(writer, type, idPrinter);
                         return;
                     }
                     else
                     {
-                        PrintStruct(writer, type);
+                        PrintStruct(writer, type, idPrinter);
                         return;
                     }
                 }
@@ -50,15 +51,12 @@
                 }
             }
 
-            private static void PrintEntityIdOfType(XmlWriter writer, Type type)
+            private static void PrintEntityIdOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
-                if (Program.WriteEntityId)
-                {
-                    writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}");
-                }
+                idPrinter.PrintStartElementEntityId(type.Name, EntityIdPrinter.ElementType.Concept);
             }
 
-            private static void PrintInheritanceOfType(XmlWriter writer, Type type)
+            private static void PrintInheritanceOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 // Inheritance
                 if (type.BaseType != null)
@@ -73,37 +71,35 @@
                 }
             }
 
-            private static void PrintConstructorsOfType(XmlWriter writer, Type type)
+            private static void PrintConstructorsOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 foreach (var constructorInfo in type.GetConstructors())
                 {
                     writer.WriteStartElement("Constructor");
                     string methodParamsString = string.Join(",", constructorInfo.GetParameters().Select(mt => GetCSharpFullName(mt.ParameterType)));
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{constructorInfo.Name}({methodParamsString})");
-                    }
+
+                    idPrinter.PrintStartElementEntityId($"{type.Name}({methodParamsString})", EntityIdPrinter.ElementType.Concept);
 
                     foreach (ParameterInfo parameter in constructorInfo.GetParameters())
                     {
                         writer.WriteStartElement("Parameter");
-                        if (Program.WriteEntityId)
-                        {
-                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{constructorInfo.Name}({methodParamsString}).{parameter.Name}");
-                        }
+                        idPrinter.PrintStartElementEntityId(parameter.Name, EntityIdPrinter.ElementType.Concept);
 
                         writer.WriteAttributeString("name", parameter.Name);
                         writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
                         writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
                         writer.WriteAttributeString("out", parameter.IsOut.ToString());
+
+                        idPrinter.LeaveElement();
                         writer.WriteEndElement();
                     }
 
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
             }
 
-            private static void PrintMethodsOfType(XmlWriter writer, Type type)
+            private static void PrintMethodsOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 IEnumerable<string> propertiesNames = type.GetProperties().Select(property => property.Name);
 
@@ -120,13 +116,18 @@
                         }
                     }
 
-                    writer.WriteStartElement("Method");
+                    if (type.IsInterface)
+                    {
+                        writer.WriteStartElement("InterfaceMethod");
+                    }
+                    else
+                    {
+                        writer.WriteStartElement("Method");
+                    }
+
                     string genericParamsString = string.Join(",", methodInfo.GetGenericArguments().Select(mt => GetCSharpFullName(mt)));
                     string methodParamsString = string.Join(",", methodInfo.GetParameters().Select(mt => GetCSharpFullName(mt.ParameterType)));
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString})");
-                    }
+                    idPrinter.PrintStartElementEntityId($"{methodInfo.Name}{{{genericParamsString}}}({methodParamsString})", EntityIdPrinter.ElementType.Concept);
 
                     writer.WriteAttributeString("name", methodInfo.Name);
                     writer.WriteAttributeString("static", methodInfo.IsStatic.ToString());
@@ -136,207 +137,197 @@
                     foreach (Type genericParam in methodInfo.GetGenericArguments())
                     {
                         writer.WriteStartElement("GenericParameter");
-                        if (Program.WriteEntityId)
-                        {
-                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString}).#{genericParam.Name}");
-                        }
+                        idPrinter.PrintStartElementEntityId($"#{genericParam.Name}", EntityIdPrinter.ElementType.Concept);
 
                         writer.WriteAttributeString("name", genericParam.Name);
+                        idPrinter.LeaveElement();
                         writer.WriteEndElement();
                     }
 
                     foreach (ParameterInfo parameter in methodInfo.GetParameters())
                     {
                         writer.WriteStartElement("Parameter");
-                        if (Program.WriteEntityId)
-                        {
-                            writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{methodInfo.Name}{{{genericParamsString}}}({methodParamsString}).{parameter.Name}");
-                        }
+                        idPrinter.PrintStartElementEntityId(parameter.Name, EntityIdPrinter.ElementType.Concept);
 
                         writer.WriteAttributeString("name", parameter.Name);
                         writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
                         writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
                         writer.WriteAttributeString("out", parameter.IsOut.ToString());
+                        idPrinter.LeaveElement();
                         writer.WriteEndElement();
                     }
 
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
             }
 
-            private static void PrintPropertiesOfType(XmlWriter writer, Type type)
+            private static void PrintPropertiesOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 // Properties
                 foreach (PropertyInfo propertyInfo in type.GetProperties())
                 {
-                    writer.WriteStartElement("Property");
-                    if (Program.WriteEntityId)
+                    if (type.IsInterface)
                     {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{propertyInfo.Name}");
+                        writer.WriteStartElement("InterfaceProperty");
                     }
+                    else
+                    {
+                        writer.WriteStartElement("Property");
+                    }
+
+                    idPrinter.PrintStartElementEntityId(propertyInfo.Name, EntityIdPrinter.ElementType.Concept);
 
                     writer.WriteAttributeString("name", propertyInfo.Name);
                     writer.WriteAttributeString("type", GetCSharpFullName(propertyInfo.PropertyType));
                     writer.WriteAttributeString("get", (propertyInfo.GetMethod != null).ToString());
                     writer.WriteAttributeString("set", (propertyInfo.SetMethod != null).ToString());
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
             }
 
-            private static void PrintFieldsOfType(XmlWriter writer, Type type)
+            private static void PrintFieldsOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 // Fields
                 foreach (FieldInfo fieldInfo in type.GetFields())
                 {
                     writer.WriteStartElement("Field");
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{fieldInfo.Name}");
-                    }
+                    idPrinter.PrintStartElementEntityId(fieldInfo.Name, EntityIdPrinter.ElementType.Concept);
 
                     writer.WriteAttributeString("name", fieldInfo.Name);
                     writer.WriteAttributeString("static", fieldInfo.IsStatic.ToString());
                     writer.WriteAttributeString("type", GetCSharpFullName(fieldInfo.FieldType));
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
             }
 
-            private static void PrintGenericParametersOfType(XmlWriter writer, Type type)
+            private static void PrintGenericParametersOfType(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 // Generic parameters
                 foreach (Type genericParam in type.GetGenericArguments())
                 {
                     writer.WriteStartElement("GenericParameter");
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{genericParam.Name}");
-                    }
+                    idPrinter.PrintStartElementEntityId($"#{genericParam.Name}", EntityIdPrinter.ElementType.Concept);
 
                     writer.WriteAttributeString("name", genericParam.Name);
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
             }
 
-            private static void PrintInterface(XmlWriter writer, Type type)
+            private static void PrintInterface(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 writer.WriteStartElement("Interface");
-                PrintEntityIdOfType(writer, type);
+                PrintEntityIdOfType(writer, type, idPrinter);
 
                 writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
-                PrintInheritanceOfType(writer, type);
-                PrintGenericParametersOfType(writer, type);
-                PrintPropertiesOfType(writer, type);
-                PrintMethodsOfType(writer, type);
+                PrintInheritanceOfType(writer, type, idPrinter);
+                PrintGenericParametersOfType(writer, type, idPrinter);
+                PrintPropertiesOfType(writer, type, idPrinter);
+                PrintMethodsOfType(writer, type, idPrinter);
+                idPrinter.LeaveElement();
                 writer.WriteEndElement();
             }
 
-            private static void PrintStruct(XmlWriter writer, Type type)
+            private static void PrintStruct(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 writer.WriteStartElement("Struct");
-                PrintEntityIdOfType(writer, type);
+                PrintEntityIdOfType(writer, type, idPrinter);
 
                 writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
-                PrintInheritanceOfType(writer, type);
-                PrintGenericParametersOfType(writer, type);
-                PrintFieldsOfType(writer, type);
-                PrintPropertiesOfType(writer, type);
-                PrintMethodsOfType(writer, type);
-                PrintConstructorsOfType(writer, type);
+                PrintInheritanceOfType(writer, type, idPrinter);
+                PrintGenericParametersOfType(writer, type, idPrinter);
+                PrintFieldsOfType(writer, type, idPrinter);
+                PrintPropertiesOfType(writer, type, idPrinter);
+                PrintMethodsOfType(writer, type, idPrinter);
+                PrintConstructorsOfType(writer, type, idPrinter);
 
                 // Nested types
                 foreach (Type nestedType in type.GetNestedTypes())
                 {
-                    PrintType(writer, nestedType);
+                    PrintType(writer, nestedType, idPrinter);
                 }
 
+                idPrinter.LeaveElement();
                 writer.WriteEndElement();
             }
 
-            private static void PrintClass(XmlWriter writer, Type type)
+            private static void PrintClass(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 writer.WriteStartElement("Class");
 
-                PrintEntityIdOfType(writer, type);
+                PrintEntityIdOfType(writer, type, idPrinter);
 
                 writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
-                PrintInheritanceOfType(writer, type);
-                PrintGenericParametersOfType(writer, type);
-                PrintFieldsOfType(writer, type);
-                PrintPropertiesOfType(writer, type);
-                PrintMethodsOfType(writer, type);
-                PrintConstructorsOfType(writer, type);
+                PrintInheritanceOfType(writer, type, idPrinter);
+                PrintGenericParametersOfType(writer, type, idPrinter);
+                PrintFieldsOfType(writer, type, idPrinter);
+                PrintPropertiesOfType(writer, type, idPrinter);
+                PrintMethodsOfType(writer, type, idPrinter);
+                PrintConstructorsOfType(writer, type, idPrinter);
 
                 // Nested types
                 foreach (Type nestedType in type.GetNestedTypes())
                 {
-                    PrintType(writer, nestedType);
+                    PrintType(writer, nestedType, idPrinter);
                 }
 
+                idPrinter.LeaveElement();
                 writer.WriteEndElement();
             }
 
-            private static void PrintEnum(XmlWriter writer, Type type)
+            private static void PrintEnum(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 writer.WriteStartElement("Enum");
-                
-                PrintEntityIdOfType(writer, type);
+                writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
-                foreach (var enumName in type.GetEnumNames())
+                PrintEntityIdOfType(writer, type, idPrinter);
+
+                foreach (var enumMember in type.GetEnumNames())
                 {
-                    writer.WriteStartElement("EnumName");
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{enumName}");
-                    }
+                    writer.WriteStartElement("EnumMember");
+                    idPrinter.PrintStartElementEntityId(enumMember, EntityIdPrinter.ElementType.Concept);
 
-                    writer.WriteAttributeString("name", enumName);
+                    writer.WriteAttributeString("name", enumMember);
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
 
+                idPrinter.LeaveElement();
                 writer.WriteEndElement();
             }
 
-            private static void PrintDelegate(XmlWriter writer, Type type)
+            private static void PrintDelegate(XmlWriter writer, Type type, EntityIdPrinter idPrinter)
             {
                 writer.WriteStartElement("Delegate");
                 
-                PrintEntityIdOfType(writer, type);
+                PrintEntityIdOfType(writer, type, idPrinter);
                 writer.WriteAttributeString("name", GetNameWithoutGenericMark(type));
 
                 var methodInfo = type.GetMethod("Invoke");
                 writer.WriteAttributeString("return", GetCSharpFullName(methodInfo.ReturnType));
 
-                // Generic parameters
-                foreach (Type genericParam in type.GetGenericArguments())
-                {
-                    writer.WriteStartElement("GenericParameter");
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.#{genericParam.Name}");
-                    }
-
-                    writer.WriteAttributeString("name", genericParam.Name);
-                    writer.WriteEndElement();
-                }
+                PrintGenericParametersOfType(writer, type, idPrinter);
 
                 foreach (ParameterInfo parameter in methodInfo.GetParameters())
                 {
                     writer.WriteStartElement("Parameter");
-                    if (Program.WriteEntityId)
-                    {
-                        writer.WriteAttributeString("entityId", $"{type.Namespace}.{type.Name}.{parameter.Name}");
-                    }
+                    idPrinter.PrintStartElementEntityId(parameter.Name, EntityIdPrinter.ElementType.Concept);
 
                     writer.WriteAttributeString("name", parameter.Name);
                     writer.WriteAttributeString("type", GetCSharpFullName(parameter.ParameterType));
                     writer.WriteAttributeString("ref", (parameter.ParameterType.IsByRef && !parameter.IsOut).ToString());
                     writer.WriteAttributeString("out", parameter.IsOut.ToString());
+                    idPrinter.LeaveElement();
                     writer.WriteEndElement();
                 }
 
+                idPrinter.LeaveElement();
                 writer.WriteEndElement();
             }
 

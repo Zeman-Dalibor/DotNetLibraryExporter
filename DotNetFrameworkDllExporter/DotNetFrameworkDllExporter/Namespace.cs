@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Reflection;
     using System.Xml;
+    using DotNetFrameworkDllExporter.XmlPrinter;
 
     public partial class Namespace
     {
@@ -41,22 +42,30 @@
             return NamespaceBuilder.Build(assembly);
         }
 
-        internal void PrintXml(XmlWriter writer)
+        internal void PrintXml(XmlWriter writer, EntityIdPrinter idPrinter)
         {
-            writer.WriteStartElement("Namespace");
-            writer.WriteAttributeString("entityId", this.GetFullNamespace());
+            writer.WriteStartElement("Model");
+            idPrinter.PrintStartElementEntityId(this.Name, EntityIdPrinter.ElementType.Module);
             writer.WriteAttributeString("name", this.Name);
 
             foreach (Type type in this.Types)
             {
-                NamespaceXmlPrinter.PrintType(writer, type);
+                writer.WriteStartElement("Namespace");
+                idPrinter.PrintStartElementEntityId(type.Name, EntityIdPrinter.ElementType.Concept);
+
+                writer.WriteAttributeString("name", this.Name);
+                NamespaceXmlPrinter.PrintType(writer, type, idPrinter);
+
+                idPrinter.LeaveElement();
+                writer.WriteEndElement();
             }
 
             foreach (KeyValuePair<string, Namespace> nameSpace in this.InnerNamespaces)
             {
-                nameSpace.Value.PrintXml(writer);
+                nameSpace.Value.PrintXml(writer, idPrinter);
             }
 
+            idPrinter.LeaveElement();
             writer.WriteEndElement();
         }
     }

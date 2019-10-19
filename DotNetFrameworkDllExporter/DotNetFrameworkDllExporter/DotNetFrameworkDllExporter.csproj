@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DLLExporter.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MainResources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -60,7 +61,8 @@
     </Compile>
     <Compile Include="Namespace.cs" />
     <Compile Include="Namespace.NamespaceBuilder.cs" />
-    <Compile Include="Namespace.NamespaceXmlPrinter.cs" />
+    <Compile Include="XmlPrinter\EntityIdPrinter.cs" />
+    <Compile Include="XmlPrinter\Namespace.NamespaceXmlPrinter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

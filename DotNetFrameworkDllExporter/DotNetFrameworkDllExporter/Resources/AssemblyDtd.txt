@@ -1,5 +1,7 @@
 
-<!ELEMENT Assembly (Namespace|Interface|Class|Enum|Struct)*>
+<!ELEMENT Assembly (Model)*>
+<!ELEMENT Model (Namespace|Model)*>
+
 <!ELEMENT Namespace (Namespace|Interface|Class|Enum|Struct)*>
     <!ATTLIST Namespace entityId CDATA #REQUIRED>
     <!ATTLIST Namespace name CDATA #REQUIRED>
@@ -15,8 +17,8 @@
 <!ELEMENT Class (Interface|Class|Enum|Struct|Field|Property|Method|Constructor|GenericParameter|BaseClass|InterfaceImplemented)*>
     <!ATTLIST Class entityId CDATA #REQUIRED>
     <!ATTLIST Class name CDATA #REQUIRED>
-    <!ATTLIST Class BaseClass CDATA>
-    <!ATTLIST Class InterfaceImplemented CDATA>
+    <!ATTLIST Class BaseClass CDATA "">
+    <!ATTLIST Class InterfaceImplemented CDATA "">
     <!ELEMENT GenericParameter (#PCDATA)>
         <!ATTLIST GenericParameter entityId CDATA #REQUIRED>
         <!ATTLIST GenericParameter name CDATA #REQUIRED>
@@ -40,8 +42,8 @@
     <!ATTLIST Property entityId CDATA #REQUIRED>
     <!ATTLIST Property name CDATA #REQUIRED>
     <!ATTLIST Property type CDATA #REQUIRED>
-    <!ATTLIST Property set (True|False) ""False"">
-    <!ATTLIST Property get (True|False) #REQUIRED>
+    <!ATTLIST Property set (True|False) "False">
+    <!ATTLIST Property get (True|False) "False">
 
 <!ELEMENT Method (GenericParameter|Parameter)*>
     <!ATTLIST Method entityId CDATA #REQUIRED>

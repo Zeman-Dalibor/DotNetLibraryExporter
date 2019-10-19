@@ -1,10 +1,10 @@
 ﻿namespace DotNetFrameworkDllExporter
 {
-    using System;
     using System.IO;
     using System.Reflection;
     using System.Text;
     using System.Xml;
+    using DotNetFrameworkDllExporter.XmlPrinter;
 
     internal class DLLExporter
     {
@@ -60,9 +60,10 @@
                     writer.WriteAttributeString("Alias", alias);
                 }
 
+                var entityIdPrinter = new EntityIdPrinter(writer);
                 foreach (var nameSpace in globalNamespace.InnerNamespaces.Values)
                 {
-                    nameSpace.PrintXml(writer);
+                    nameSpace.PrintXml(writer, entityIdPrinter);
                 }
 
                 writer.WriteEndElement();
