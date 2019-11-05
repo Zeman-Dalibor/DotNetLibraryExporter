@@ -6,6 +6,7 @@ Utility to extract public API of .NET library.
  - .NET Framework 4.5+ (version 4.8 recommended)
  
 Repository contains Microsoft Visual Studio Solution File (.sln). It contains 3 projects file (exporter, tests and example dll). Both, solution and project files can be opened by one of the standard IDE for C#:
+ - SharpDevelop
  - https://visualstudio.microsoft.com/vs/ VS2012+ (the community edition is sufficient)
  - https://www.monodevelop.com/
  - https://www.jetbrains.com/rider/
@@ -21,13 +22,16 @@ Parameter | Name | Parameters | Desription
 --- | --- | --- | ---
 `<input>` | Input File | | First required parameter used as source library which will be extracted.
 **-i**    | interactive mode | | Program will be waiting for pressing any key after extracting library.
-**-o**    | output | 1. Path to output file. | Specify file where to write output. It file exist it will be overridden. It none output file is specified standard output (stdout) will be used.
+**-o**    | output | Path to output file. | Specify file where to write output. It file exist it will be overridden. It none output file is specified standard output (stdout) will be used.
 **-e**    | entity ID | | Output file will NOT contains attribute `entityId`, as a unique identifier.
+**-o**    | blacklist | Path to blacklist file. | Specify blacklist file. It contains line-separated Assembly Qualified Name of those types which will be excluded. It will be excluded not only type declaration but also the place of usage.
 
 ## Features
  - Single Assembly extracting
  - Support namespaces and namespaces members: class, interface, enum
  - Support type members: fields, methods, properties, nested types
+ - Unique entity ID identification
+ - Blacklisting some types
 
 ## Output Structure
 Output is always xml file. By default its encoding is UTF-8. It can be different if the set output is not supporting this type of encoding, for example standard output.
@@ -39,39 +43,49 @@ Element   | attributes | C#/.NET origin | Meaning
 ---       | ---        | ---            | --- 
 Namespace | name       | namespace      |
 Interface | name       | interface      |
-Class     | name       | class          |
+Class     | name, BaseClass, InterfaceImplemented       | class          |
 Struct    | name       | struct         |
-Delegate  | name       | delegate       |
+Delegate  | name, return       | delegate       |
 Enum      | name       | enum           |
 ---       | ---        | ---            | --- 
-Method    |            |                |
-Parameter |            |                |                
-Field     |            |                |
-Property  |            |                | 
+Method    | name, return           |                |
+Parameter | name, type, ref, out   |                |  
+Property  | name, type           |                |               
+Field     | name, type           |                |
+InterfaceProperty  | name, type           |                |    
+InterfaceMethod  | name, return           |                |    
+Constructor  | name           |                |        
 
 
 ### Default DTD file ###
 To every XML file created by this tool is prepended DTD file, this is how by default look like.
 
 ```
-<!ELEMENT Assembly (Namespace|Interface|Class|Enum|Struct)*>
+
+<!ELEMENT Assembly (Model)*>
+<!ELEMENT Model (Namespace|Model)*>
+
 <!ELEMENT Namespace (Namespace|Interface|Class|Enum|Struct)*>
     <!ATTLIST Namespace entityId CDATA #REQUIRED>
     <!ATTLIST Namespace name CDATA #REQUIRED>
 
-<!ELEMENT Interface (Method|Property)*>
+<!ELEMENT Interface (InterfaceMethod|InterfaceProperty)*>
     <!ATTLIST Interface entityId CDATA #REQUIRED>
     <!ATTLIST Interface name CDATA #REQUIRED>
 
-<!ELEMENT Enum (#PCDATA)>
+<!ELEMENT Enum (EnumMember)>
     <!ATTLIST Enum entityId CDATA #REQUIRED>
     <!ATTLIST Enum name CDATA #REQUIRED>
+
+<!ELEMENT EnumMember (#PCDATA)>
+    <!ATTLIST EnumMember entityId CDATA #REQUIRED>
+    <!ATTLIST EnumMember name CDATA #REQUIRED>
 
 <!ELEMENT Class (Interface|Class|Enum|Struct|Field|Property|Method|Constructor|GenericParameter|BaseClass|InterfaceImplemented)*>
     <!ATTLIST Class entityId CDATA #REQUIRED>
     <!ATTLIST Class name CDATA #REQUIRED>
-    <!ATTLIST Class BaseClass CDATA>
-    <!ATTLIST Class InterfaceImplemented CDATA>
+    <!ATTLIST Class BaseClass CDATA "">
+    <!ATTLIST Class InterfaceImplemented CDATA "">
     <!ELEMENT GenericParameter (#PCDATA)>
         <!ATTLIST GenericParameter entityId CDATA #REQUIRED>
         <!ATTLIST GenericParameter name CDATA #REQUIRED>
@@ -84,7 +98,6 @@ To every XML file created by this tool is prepended DTD file, this is how by def
 <!ELEMENT Struct (Interface|Class|Enum|Struct|Field|Property|Method|Constructor|GenericParameter|InterfaceImplemented)*>
     <!ATTLIST Struct entityId CDATA #REQUIRED>
     <!ATTLIST Struct name CDATA #REQUIRED>
-    <!ATTLIST Struct InterfaceImplemented CDATA>
 
 <!ELEMENT Field (#PCDATA)>
     <!ATTLIST Field entityId CDATA #REQUIRED>
@@ -97,7 +110,14 @@ To every XML file created by this tool is prepended DTD file, this is how by def
     <!ATTLIST Property name CDATA #REQUIRED>
     <!ATTLIST Property type CDATA #REQUIRED>
     <!ATTLIST Property set (True|False) "False">
-    <!ATTLIST Property get (True|False) #REQUIRED>
+    <!ATTLIST Property get (True|False) "False">
+
+<!ELEMENT InterfaceProperty (#PCDATA)>
+    <!ATTLIST InterfaceProperty entityId CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty name CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty type CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty set (True|False) "False">
+    <!ATTLIST InterfaceProperty get (True|False) "False">
 
 <!ELEMENT Method (GenericParameter|Parameter)*>
     <!ATTLIST Method entityId CDATA #REQUIRED>
@@ -110,6 +130,13 @@ To every XML file created by this tool is prepended DTD file, this is how by def
         <!ATTLIST Parameter type CDATA #REQUIRED>
         <!ATTLIST Parameter ref CDATA #REQUIRED>
         <!ATTLIST Parameter out CDATA #REQUIRED>
+
+<!ELEMENT InterfaceMethod (GenericParameter|Parameter)*>
+    <!ATTLIST InterfaceMethod entityId CDATA #REQUIRED>
+    <!ATTLIST InterfaceMethod name CDATA #REQUIRED>
+    <!ATTLIST InterfaceMethod static (True|False) #REQUIRED>
+    <!ATTLIST InterfaceMethod return CDATA #REQUIRED>
+
 
 <!ELEMENT Constructor (Parameter)*>
 ```
