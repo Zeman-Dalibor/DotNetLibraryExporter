@@ -8,5 +8,7 @@
         List<string> ExampleSystemUsage { get; set; }
 
         Task<string> GetExampleTask();
+
+        new int A { get; set; }
     }
 }

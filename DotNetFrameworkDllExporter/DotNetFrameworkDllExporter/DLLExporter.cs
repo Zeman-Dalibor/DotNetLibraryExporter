@@ -15,13 +15,11 @@
             this.output = output;
         }
 
-        internal void ExportAPI(string dllFileName, string alias = null)
+        internal void ExportAPI(params string[] dllFileName)
         {
-            Assembly sampleAssembly = GetAssemblyByPath(dllFileName);
+            var globalNamespace = this.BuildNamespaceTree(dllFileName);
 
-            var globalNamespace = this.BuildNamespaceTree(sampleAssembly);
-
-            this.PrintToXml(globalNamespace, alias);
+            this.PrintToXml(globalNamespace);
         }
 
         private static Assembly GetAssemblyByPath(string dllFileName)
@@ -36,12 +34,14 @@
             return assembly;
         }
 
-        private Namespace BuildNamespaceTree(Assembly assembly)
+        private Namespace BuildNamespaceTree(params string[] dllFileName)
         {
-            return Namespace.Create(assembly);
+            Assembly assembly = GetAssemblyByPath(dllFileName[0]);
+
+            return NamespaceBuilder.Build(assembly);
         }
         
-        private void PrintToXml(Namespace globalNamespace, string alias = null)
+        private void PrintToXml(Namespace globalNamespace)
         {
             var settings = new XmlWriterSettings
             {
@@ -55,15 +55,12 @@
                 writer.WriteStartDocument();
                 writer.WriteDocType("Assembly", null, null, MainResources.AssemblyDtd);
                 writer.WriteStartElement("Assembly");
-                if (alias != null)
-                {
-                    writer.WriteAttributeString("Alias", alias);
-                }
 
                 var entityIdPrinter = new EntityIdPrinter(writer);
+                var namespaceXmlPrinter = new NamespaceXmlPrinter(writer, entityIdPrinter);
                 foreach (var nameSpace in globalNamespace.InnerNamespaces.Values)
                 {
-                    nameSpace.PrintXml(writer, entityIdPrinter);
+                    namespaceXmlPrinter.PrintNamespace(nameSpace);
                 }
 
                 writer.WriteEndElement();

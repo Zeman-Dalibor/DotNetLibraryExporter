@@ -3,49 +3,119 @@
     using System;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// Example Class for testing purpose.
+    /// </summary>
     public class ExampleClass1
     {
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public static char ExampleStaticVariable;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public long ExampleInstanceVariable;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public InnerGenericTypes.DoubleInnerClass DoubleInner;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public InnerGenericTypes.OuterClass<string> CustomGenericField;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public InnerGenericTypes.OuterClass<string>.InnerNonGeneric CustomInnerGenericField;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         public InnerGenericTypes.OuterClass<string>.InnerGenericClass<int, string, char> CustomInnerDoubleGenericField;
 
+        /// <summary>
+        /// Example variable for testing purpose.
+        /// </summary>
         protected int protectedVar;
-        
+
+        /// <summary>
+        /// Gets or sets example property for testing purpose.
+        /// </summary>
         public int ExampleAutoProperty { get; set; }
 
-        public int OnlyGet { get => throw new NotImplementedException(); }
+        /// <summary>
+        /// Gets example property for testing purpose.
+        /// </summary>
+        public int OnlyGet
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
 
-        public int OnlySet { set => throw new NotImplementedException(); }
+        /// <summary>
+        /// Sets example property for testing purpose.
+        /// </summary>
+        public int OnlySet
+        {
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
 
-        public int ReadOnlyProperty { get; }
+        // public int ReadOnlyProperty { get; }
+        /*
+         * Check for new version.
+         * */
 
-        public byte ExampleFullProperty { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        /// <summary>
+        /// Gets or sets example property for testing purpose.
+        /// </summary>
+        public byte ExampleFullProperty
+        {
+            get { throw new NotImplementedException(); }
+            set { throw new NotImplementedException(); }
+        }
 
+        /// <summary>
+        /// Example method for testing purpose.
+        /// </summary>
         public static void ExampleStaticVoidMethod()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Example method for testing purpose.
+        /// </summary>
         public void ExampleVoidMethod()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Example method for testing purpose.
+        /// </summary>
         public void ExampleParametrizedMethod()
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Example inner class for testing purpose.
+        /// </summary>
         public class InnerClass2
         {
+            /// <summary>
+            /// Example property for testing purpose.
+            /// </summary>
             public int Number { get; set; }
         }
     }

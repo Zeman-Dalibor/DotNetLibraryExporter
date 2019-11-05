@@ -1,6 +1,7 @@
 ﻿namespace DotNetFrameworkDllExporter
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Reflection;
@@ -9,6 +10,9 @@
     internal class Program
     {
         public static bool WriteEntityId = true;
+
+        public static List<Type> ExcludedTypes = new List<Type>();
+
         private static string dllFileName = null;
         private static bool interactive = false;
         private static string outputFilename = null;
@@ -128,9 +132,29 @@
                 case "-e":
                     WriteEntityId = false;
                     break;
+
+                case "-b":
+                    ExcludedTypes = LoadBlacklistFile(args[i + 1]);
+                    skipArguments = 1;
+                    break;
             }
 
             return skipArguments;
+        }
+
+        private static List<Type> LoadBlacklistFile(string v)
+        {
+            var blacklist = new List<Type>();
+            using (var sr = new StreamReader(v))
+            {
+                string line;
+                while ((line = sr.ReadLine()) != null)
+                {
+                    blacklist.Add(Type.GetType(line));
+                }
+            }
+
+            return blacklist;
         }
     }
 }

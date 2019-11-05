@@ -23,6 +23,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>..\..\GeneralCode.ruleset</CodeAnalysisRuleSet>
+    <LangVersion>5</LangVersion>
+    <DocumentationFile>bin\Debug\DotNetFrameworkExampleDll.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

@@ -6,13 +6,17 @@
     <!ATTLIST Namespace entityId CDATA #REQUIRED>
     <!ATTLIST Namespace name CDATA #REQUIRED>
 
-<!ELEMENT Interface (Method|Property)*>
+<!ELEMENT Interface (InterfaceMethod|InterfaceProperty)*>
     <!ATTLIST Interface entityId CDATA #REQUIRED>
     <!ATTLIST Interface name CDATA #REQUIRED>
 
-<!ELEMENT Enum (#PCDATA)>
+<!ELEMENT Enum (EnumMember)>
     <!ATTLIST Enum entityId CDATA #REQUIRED>
     <!ATTLIST Enum name CDATA #REQUIRED>
+
+<!ELEMENT EnumMember (#PCDATA)>
+    <!ATTLIST EnumMember entityId CDATA #REQUIRED>
+    <!ATTLIST EnumMember name CDATA #REQUIRED>
 
 <!ELEMENT Class (Interface|Class|Enum|Struct|Field|Property|Method|Constructor|GenericParameter|BaseClass|InterfaceImplemented)*>
     <!ATTLIST Class entityId CDATA #REQUIRED>
@@ -45,6 +49,13 @@
     <!ATTLIST Property set (True|False) "False">
     <!ATTLIST Property get (True|False) "False">
 
+<!ELEMENT InterfaceProperty (#PCDATA)>
+    <!ATTLIST InterfaceProperty entityId CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty name CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty type CDATA #REQUIRED>
+    <!ATTLIST InterfaceProperty set (True|False) "False">
+    <!ATTLIST InterfaceProperty get (True|False) "False">
+
 <!ELEMENT Method (GenericParameter|Parameter)*>
     <!ATTLIST Method entityId CDATA #REQUIRED>
     <!ATTLIST Method name CDATA #REQUIRED>
@@ -56,5 +67,12 @@
         <!ATTLIST Parameter type CDATA #REQUIRED>
         <!ATTLIST Parameter ref CDATA #REQUIRED>
         <!ATTLIST Parameter out CDATA #REQUIRED>
+
+<!ELEMENT InterfaceMethod (GenericParameter|Parameter)*>
+    <!ATTLIST InterfaceMethod entityId CDATA #REQUIRED>
+    <!ATTLIST InterfaceMethod name CDATA #REQUIRED>
+    <!ATTLIST InterfaceMethod static (True|False) #REQUIRED>
+    <!ATTLIST InterfaceMethod return CDATA #REQUIRED>
+
 
 <!ELEMENT Constructor (Parameter)*>

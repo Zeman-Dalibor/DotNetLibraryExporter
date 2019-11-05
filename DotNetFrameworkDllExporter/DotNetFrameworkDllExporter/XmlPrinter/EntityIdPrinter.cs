@@ -1,5 +1,6 @@
 ﻿namespace DotNetFrameworkDllExporter.XmlPrinter
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
@@ -7,7 +8,7 @@
 
     internal class EntityIdPrinter
     {
-        public enum ElementType
+        internal enum ElementType
         {
             Module,
             Concept,
@@ -16,18 +17,25 @@
         private readonly List<(string id, ElementType type)> entityIdStack = new List<(string, ElementType)>();
         private readonly XmlWriter writer;
 
-        public EntityIdPrinter(XmlWriter writer)
+        internal EntityIdPrinter(XmlWriter writer)
         {
             this.writer = writer;
         }
 
-        public void PrintStartElementEntityId(string append, ElementType type)
+        internal void AddEntityId(string append, ElementType type)
+        {
+            this.AddElement(append, type);
+        }
+
+        internal void PrintStartElementEntityId(string append, ElementType type)
         {
             this.AddElement(append, type);
             this.PrintStack();
         }
 
-        public void LeaveElement() => this.entityIdStack.RemoveAt(this.entityIdStack.Count - 1);
+        internal void LeaveElement() => this.entityIdStack.RemoveAt(this.entityIdStack.Count - 1);
+
+        internal void RemoveEntityId() => this.entityIdStack.RemoveAt(this.entityIdStack.Count - 1);
 
         private void PrintStack()
         {
