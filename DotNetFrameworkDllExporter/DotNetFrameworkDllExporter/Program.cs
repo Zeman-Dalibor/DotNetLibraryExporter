@@ -99,10 +99,11 @@
             output.WriteLine($".NET Framework Dll Exporter {Assembly.GetExecutingAssembly().GetName().Version.ToString()}");
             output.WriteLine("Utility for extracting API from .NET Framework DLL");
             output.WriteLine(" ------------------------------------------------ ");
-            output.WriteLine($"Usage: {Path.GetFileName(Assembly.GetEntryAssembly().Location)} <path-to-extracting-dll-file> [-i] [-o <path-to-output-file>]");
+            output.WriteLine($"Usage: {Path.GetFileName(Assembly.GetEntryAssembly().Location)} <path-to-extracting-dll-file> [-o <path-to-output-file>]");
             output.WriteLine("-i - interactive mode");
             output.WriteLine("-o <output-file-path> - specify output file");
             output.WriteLine("-e - disable entity ID");
+            output.WriteLine("-b <blacklist-file-path> - specify blacklist file");
             output.WriteLine();
             Console.ReadKey();
         }
