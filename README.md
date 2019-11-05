@@ -24,7 +24,7 @@ Parameter | Name | Parameters | Desription
 **-i**    | interactive mode | | Program will be waiting for pressing any key after extracting library.
 **-o**    | output | Path to output file. | Specify file where to write output. It file exist it will be overridden. It none output file is specified standard output (stdout) will be used.
 **-e**    | entity ID | | Output file will NOT contains attribute `entityId`, as a unique identifier.
-**-o**    | blacklist | Path to blacklist file. | Specify blacklist file. It contains line-separated Assembly Qualified Name of those types which will be excluded. It will be excluded not only type declaration but also the place of usage.
+**-b**    | blacklist | Path to blacklist file. | Specify blacklist file. It contains line-separated Assembly Qualified Name of those types which will be excluded. It will be excluded not only type declaration but also the place of usage.
 
 ## Features
  - Single Assembly extracting
