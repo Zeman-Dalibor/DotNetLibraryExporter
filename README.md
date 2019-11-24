@@ -39,22 +39,23 @@ Output is always xml file. By default its encoding is UTF-8. It can be different
 Every output file has at the beginning xml version information. After that there is element `Assembly` which contains whole extracted API from one dll (Assembly). Whole file is hierarchical by namespaces and (non-nested) types. Every element has its unique entityId (this feature can be disableb by command line run parameter).
 
 ### Overview of elements:
-Element   | attributes | C#/.NET origin | Meaning
----       | ---        | ---            | --- 
-Namespace | name       | namespace      |
-Interface | name       | interface      |
-Class     | name, BaseClass, InterfaceImplemented       | class          |
-Struct    | name       | struct         |
-Delegate  | name, return       | delegate       |
-Enum      | name       | enum           |
----       | ---        | ---            | --- 
-Method    | name, return           |                |
-Parameter | name, type, ref, out   |                |  
-Property  | name, type           |                |               
-Field     | name, type           |                |
-InterfaceProperty  | name, type           |                |    
-InterfaceMethod  | name, return           |                |    
-Constructor  | name           |                |        
+Element   | attributes                             | C#/.NET origin  
+---       | ---                                    | ---             
+Namespace | name                                   | namespace       
+Interface | name                                   | interface       
+Class     | name, BaseClass, InterfaceImplemented  | class         
+Struct    | name                                   | struct         
+Delegate  | name, return                           | delegate       
+Enum      | name                                   | enum           
+---       | ---                                    | ---           
+Method    | name, static, return                   |                 
+Parameter | name, type, ref, out                   |                
+GenericParameter | name                            |                 
+Property  | name, type, set, get                   |                        
+Field     | name, type, static, type               |                
+InterfaceProperty  | name, type, set, get          |                
+InterfaceMethod  | name, static, return            |                
+Constructor  | name                                |                   
 
 
 ### Default DTD file ###
