@@ -56,8 +56,7 @@
             {
                 this.PrintNamespace(nameSpace.Value);
             }
-
-            // entityIdPrinter.LeaveElement();
+            
             this.writer.WriteEndElement();
         }
 
