@@ -61,7 +61,22 @@ namespace DotNetFrameworkDllExporter {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to 
+        ///&lt;!ELEMENT Assembly (Model)*&gt;
+        ///&lt;!ELEMENT Model (Namespace|Model)*&gt;
+        ///
+        ///&lt;!ELEMENT Namespace (Namespace|Interface|Class|Enum|Struct)*&gt;
+        ///    &lt;!ATTLIST Namespace entityId CDATA #REQUIRED&gt;
+        ///    &lt;!ATTLIST Namespace name CDATA #REQUIRED&gt;
+        ///
+        ///&lt;!ELEMENT Interface (InterfaceMethod|InterfaceProperty)*&gt;
+        ///    &lt;!ATTLIST Interface entityId CDATA #REQUIRED&gt;
+        ///    &lt;!ATTLIST Interface name CDATA #REQUIRED&gt;
+        ///
+        ///&lt;!ELEMENT Enum (EnumMember)&gt;
+        ///    &lt;!ATTLIST Enum entityId CDATA #REQUIRED&gt;
+        ///    &lt;!ATTLIST Enum name CDATA #REQUIRED&gt;
+        ///        /// [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string AssemblyDtd {
             get {
